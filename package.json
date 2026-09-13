@@ -11,7 +11,6 @@
     "check": "pnpm test && pnpm typecheck:integrations && pnpm test:rust && cargo fmt --all -- --check && cargo clippy --workspace --all-targets --all-features -- -D warnings",
     "build:sandbox": "anchor build -p cpi_sandbox --no-idl -- --tools-version v1.52 && pnpm build:sandbox:idl",
     "test:integrations": "node scripts/test-integrations.mjs",
-    "test:integrations:run": "tsx --test --test-concurrency=1 tests/integration/*/*.test.ts",
     "typecheck:integrations": "tsc -p tests/tsconfig.json --noEmit",
     "build:sandbox:idl": "mkdir -p target/idl target/types && cd programs/cpi-sandbox && anchor idl build -o ../../target/idl/cpi_sandbox.json -t ../../target/types/cpi_sandbox.ts",
     "codegen": "node scripts/generate.mjs",

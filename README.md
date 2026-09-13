@@ -136,6 +136,8 @@ pnpm check
 
 ## Sandbox integration tests
 
+`pnpm test:integrations` builds the packages and sandbox, starts Surfpool, deploys the sandbox, runs the selected suites, and stops the validator it started. A separate validator startup is only needed when passing `--use-existing`.
+
 The [sandbox program](programs/cpi-sandbox/README.md) accepts arbitrary registered CPI bundles and signs with a PDA scoped to the test payer. The suites follow the Surfpool approach from `tokenized-positions` and run the **real forked program bytecode**, not mock integration programs.
 
 Prerequisites: Node.js 22+, pnpm 10.24.0, Anchor 0.31.1, Solana/Agave CLI, and Surfpool. Validated with Solana CLI 2.3.8, SBF platform-tools v1.52, and Surfpool 1.1.2. `build:sandbox` selects platform-tools v1.52; the first build may download them. The runtime dependency lock includes a CommonJS-compatible UUID override for Solana web3.js on earlier Node 22 releases.
