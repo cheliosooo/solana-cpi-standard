@@ -1,0 +1,22 @@
+{
+  "name": "@solana-cpi-standard/core",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@solana/kit": "^2.3.0"
+  },
+  "devDependencies": {
+    "@solana/kit": "2.3.0"
+  }
+}

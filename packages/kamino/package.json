@@ -1,0 +1,19 @@
+{
+  "name": "@solana-cpi-standard/kamino",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@solana-cpi-standard/core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@solana/kit": "^2.3.0"
+  }
+}

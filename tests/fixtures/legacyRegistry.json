@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "retiredIds": [2, 3, 4, 5, 6, 7, 23, 24],
+  "programs": [
+    {
+      "name": "jupiter",
+      "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "entries": [
+        {
+          "id": 0,
+          "label": "JUPITER_SWAP",
+          "instructionName": "",
+          "category": "Swap",
+          "expectedTargetAccountIndex": null
+        }
+      ]
+    },
+    {
+      "name": "perena",
+      "programId": "save8RQVPMWNTzU18t3GBvBkN9hT7jsGjiCQ28FpD9H",
+      "entries": [
+        {
+          "id": 1,
+          "label": "PERENA_MINT",
+          "instructionName": "execute_deposit",
+          "category": "Swap",
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 22,
+          "label": "PERENA_MINT_FEE_EXEMPT",
+          "instructionName": "execute_deposit_fee_exempt",
+          "category": "Swap",
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 25,
+          "label": "PERENA_BURN_FROM_EXTERNAL",
+          "instructionName": "execute_withdraw_from_external",
+          "category": "Swap",
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 26,
+          "label": "PERENA_BURN_FROM_EXTERNAL_FEE_EXEMPT",
+          "instructionName": "execute_withdraw_from_external_fee_exempt",
+          "category": "Swap",
+          "expectedTargetAccountIndex": null
+        }
+      ]
+    },
+    {
+      "name": "kamino-lending",
+      "programId": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+      "entries": [
+        {
+          "id": 8,
+          "label": "K_INIT_USER_METADATA",
+          "instructionName": "init_user_metadata",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 9,
+          "label": "K_INIT_OBLIGATION",
+          "instructionName": "init_obligation",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 10,
+          "label": "K_INIT_USER_FARM",
+          "instructionName": "init_obligation_farms_for_reserve",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 11,
+          "label": "K_REFRESH_RESERVE",
+          "instructionName": "refresh_reserve",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 12,
+          "label": "K_REFRESH_OBLIGATION",
+          "instructionName": "refresh_obligation",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 13,
+          "label": "K_REFRESH_USER_FARM",
+          "instructionName": "refresh_obligation_farms_for_reserve",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 15,
+          "label": "K_REQUEST_ELEVATION_GROUP",
+          "instructionName": "request_elevation_group",
+          "category": null,
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 16,
+          "label": "K_DEPOSIT",
+          "instructionName": "deposit_reserve_liquidity_and_obligation_collateral_v2",
+          "category": "Deposit",
+          "expectedTargetAccountIndex": 1
+        },
+        {
+          "id": 17,
+          "label": "K_WITHDRAW",
+          "instructionName": "withdraw_obligation_collateral_and_redeem_reserve_collateral_v2",
+          "category": "Withdraw",
+          "expectedTargetAccountIndex": 1
+        },
+        {
+          "id": 18,
+          "label": "K_BORROW",
+          "instructionName": "borrow_obligation_liquidity_v2",
+          "category": "Borrow",
+          "expectedTargetAccountIndex": 1
+        },
+        {
+          "id": 19,
+          "label": "K_REPAY",
+          "instructionName": "repay_obligation_liquidity_v2",
+          "category": "Repay",
+          "expectedTargetAccountIndex": 1
+        }
+      ]
+    },
+    {
+      "name": "kamino-farms",
+      "programId": "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+      "entries": [
+        {
+          "id": 14,
+          "label": "K_HARVEST_REWARD",
+          "instructionName": "harvest_reward",
+          "category": "ClaimIncentives",
+          "expectedTargetAccountIndex": null
+        }
+      ]
+    },
+    {
+      "name": "metaplex-token-metadata",
+      "programId": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+      "entries": [
+        {
+          "id": 20,
+          "label": "MPL_UPDATE_METADATA",
+          "instructionName": "",
+          "category": "UpdateMintMetadata",
+          "expectedTargetAccountIndex": null
+        },
+        {
+          "id": 21,
+          "label": "MPL_CREATE_METADATA",
+          "instructionName": "",
+          "category": "UpdateMintMetadata",
+          "expectedTargetAccountIndex": null
+        }
+      ]
+    }
+  ]
+}

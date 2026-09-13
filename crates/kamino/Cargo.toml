@@ -1,0 +1,12 @@
+[package]
+name = "solana-cpi-standard-kamino"
+version.workspace = true
+edition.workspace = true
+description = "Kamino lending and farms CPI registry entries"
+
+[dependencies]
+solana-cpi-standard-core.workspace = true
+solana-pubkey.workspace = true
+
+[dev-dependencies]
+solana-cpi-standard-core = { workspace = true, features = ["registry-export"] }

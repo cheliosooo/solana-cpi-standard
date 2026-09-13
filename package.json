@@ -1,0 +1,45 @@
+{
+  "name": "solana-cpi-standard",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check:generated": "node scripts/generate.mjs --check",
+    "build": "pnpm --filter @solana-cpi-standard/core build && pnpm --filter \"!@solana-cpi-standard/core\" -r build",
+    "test": "pnpm check:generated && pnpm build && node --test tests/*.test.cjs tests/*.test.mjs",
+    "test:rust": "cargo test --workspace --all-features",
+    "check": "pnpm test && pnpm typecheck:integrations && pnpm test:rust && cargo fmt --all -- --check && cargo clippy --workspace --all-targets --all-features -- -D warnings",
+    "build:sandbox": "anchor build -p cpi_sandbox --no-idl -- --tools-version v1.52 && pnpm build:sandbox:idl",
+    "test:integrations": "node scripts/test-integrations.mjs",
+    "test:integrations:run": "tsx --test --test-concurrency=1 tests/integration/*/*.test.ts",
+    "typecheck:integrations": "tsc -p tests/tsconfig.json --noEmit",
+    "build:sandbox:idl": "mkdir -p target/idl target/types && cd programs/cpi-sandbox && anchor idl build -o ../../target/idl/cpi_sandbox.json -t ../../target/types/cpi_sandbox.ts",
+    "codegen": "node scripts/generate.mjs",
+    "check:registry": "node scripts/check-registry.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "@types/node": "^22.0.0",
+    "@anchor-lang/core": "0.32.1",
+    "@solana/web3.js": "1.98.4",
+    "@solana/spl-token": "0.4.9",
+    "@solana/kit": "2.3.0",
+    "@perena/vault-sdk": "1.0.44",
+    "@kamino-finance/klend-sdk": "11.0.2",
+    "@metaplex-foundation/mpl-token-metadata": "2.13.0",
+    "tsx": "4.20.5",
+    "bn.js": "^5.2.2",
+    "@types/bn.js": "^5.1.0",
+    "@solana-cpi-standard/core": "workspace:*",
+    "@solana-cpi-standard/jupiter": "workspace:*",
+    "@solana-cpi-standard/perena": "workspace:*",
+    "@solana-cpi-standard/metaplex-token-metadata": "workspace:*",
+    "@kamino-finance/farms-sdk": "3.2.26",
+    "@solana-cpi-standard/kamino": "workspace:*"
+  },
+  "pnpm": {
+    "overrides": {
+      "rpc-websockets>uuid": "11.1.0"
+    }
+  }
+}

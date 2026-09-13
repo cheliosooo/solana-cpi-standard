@@ -1,0 +1,28 @@
+[package]
+name = "cpi_sandbox"
+version.workspace = true
+edition.workspace = true
+publish = false
+description = "Local sandbox for executing CPI Standard integration tests"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang = "0.31.1"
+# Anchor's debug/IDL derives refer to this crate by its absolute name.
+solana-program = "2.3.0"
+borsh.workspace = true
+solana-cpi-standard-core.workspace = true
+solana-cpi-standard-registry = { path = "../../crates/registry", features = ["jupiter", "perena", "kamino", "metaplex-token-metadata"] }

@@ -1,0 +1,12 @@
+[package]
+name = "solana-cpi-standard-metaplex-token-metadata"
+version.workspace = true
+edition.workspace = true
+description = "metaplex-token-metadata CPI registry entries"
+
+[dependencies]
+solana-cpi-standard-core.workspace = true
+solana-pubkey.workspace = true
+
+[dev-dependencies]
+solana-cpi-standard-core = { workspace = true, features = ["registry-export"] }

@@ -1,0 +1,348 @@
+{
+  "version": 1,
+  "retiredIds": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    23,
+    24
+  ],
+  "programs": [
+    {
+      "name": "jupiter",
+      "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "programIdConstant": "PROGRAM_ID",
+      "entries": [
+        {
+          "category": "Swap",
+          "discriminator": null,
+          "expectedTargetAccountIndex": null,
+          "id": 0,
+          "instructionName": "",
+          "label": "JUPITER_SWAP"
+        }
+      ]
+    },
+    {
+      "name": "kamino-lending",
+      "programId": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+      "programIdConstant": "KAMINO_LENDING_PROGRAM_ID",
+      "integration": "kamino",
+      "entries": [
+        {
+          "category": null,
+          "discriminator": [
+            117,
+            169,
+            176,
+            69,
+            197,
+            23,
+            15,
+            162
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 8,
+          "instructionName": "init_user_metadata",
+          "label": "K_INIT_USER_METADATA"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            251,
+            10,
+            231,
+            76,
+            27,
+            11,
+            159,
+            96
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 9,
+          "instructionName": "init_obligation",
+          "label": "K_INIT_OBLIGATION"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            136,
+            63,
+            15,
+            186,
+            211,
+            152,
+            168,
+            164
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 10,
+          "instructionName": "init_obligation_farms_for_reserve",
+          "label": "K_INIT_USER_FARM"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            2,
+            218,
+            138,
+            235,
+            79,
+            201,
+            25,
+            102
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 11,
+          "instructionName": "refresh_reserve",
+          "label": "K_REFRESH_RESERVE"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            33,
+            132,
+            147,
+            228,
+            151,
+            192,
+            72,
+            89
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 12,
+          "instructionName": "refresh_obligation",
+          "label": "K_REFRESH_OBLIGATION"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            140,
+            144,
+            253,
+            21,
+            10,
+            74,
+            248,
+            3
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 13,
+          "instructionName": "refresh_obligation_farms_for_reserve",
+          "label": "K_REFRESH_USER_FARM"
+        },
+        {
+          "category": null,
+          "discriminator": [
+            36,
+            119,
+            251,
+            129,
+            34,
+            240,
+            7,
+            147
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 15,
+          "instructionName": "request_elevation_group",
+          "label": "K_REQUEST_ELEVATION_GROUP"
+        },
+        {
+          "category": "Deposit",
+          "discriminator": [
+            216,
+            224,
+            191,
+            27,
+            204,
+            151,
+            102,
+            175
+          ],
+          "expectedTargetAccountIndex": 1,
+          "id": 16,
+          "instructionName": "deposit_reserve_liquidity_and_obligation_collateral_v2",
+          "label": "K_DEPOSIT"
+        },
+        {
+          "category": "Withdraw",
+          "discriminator": [
+            235,
+            52,
+            119,
+            152,
+            149,
+            197,
+            20,
+            7
+          ],
+          "expectedTargetAccountIndex": 1,
+          "id": 17,
+          "instructionName": "withdraw_obligation_collateral_and_redeem_reserve_collateral_v2",
+          "label": "K_WITHDRAW"
+        },
+        {
+          "category": "Borrow",
+          "discriminator": [
+            161,
+            128,
+            143,
+            245,
+            171,
+            199,
+            194,
+            6
+          ],
+          "expectedTargetAccountIndex": 1,
+          "id": 18,
+          "instructionName": "borrow_obligation_liquidity_v2",
+          "label": "K_BORROW"
+        },
+        {
+          "category": "Repay",
+          "discriminator": [
+            116,
+            174,
+            213,
+            76,
+            180,
+            53,
+            210,
+            144
+          ],
+          "expectedTargetAccountIndex": 1,
+          "id": 19,
+          "instructionName": "repay_obligation_liquidity_v2",
+          "label": "K_REPAY"
+        }
+      ]
+    },
+    {
+      "name": "kamino-farms",
+      "programId": "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+      "programIdConstant": "KAMINO_FARMS_PROGRAM_ID",
+      "integration": "kamino",
+      "entries": [
+        {
+          "category": "ClaimIncentives",
+          "discriminator": [
+            68,
+            200,
+            228,
+            233,
+            184,
+            32,
+            226,
+            188
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 14,
+          "instructionName": "harvest_reward",
+          "label": "K_HARVEST_REWARD"
+        }
+      ]
+    },
+    {
+      "name": "metaplex-token-metadata",
+      "programId": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+      "programIdConstant": "PROGRAM_ID",
+      "entries": [
+        {
+          "category": "UpdateMintMetadata",
+          "discriminator": null,
+          "expectedTargetAccountIndex": null,
+          "id": 20,
+          "instructionName": "",
+          "label": "MPL_UPDATE_METADATA"
+        },
+        {
+          "category": "UpdateMintMetadata",
+          "discriminator": null,
+          "expectedTargetAccountIndex": null,
+          "id": 21,
+          "instructionName": "",
+          "label": "MPL_CREATE_METADATA"
+        }
+      ]
+    },
+    {
+      "name": "perena",
+      "programId": "save8RQVPMWNTzU18t3GBvBkN9hT7jsGjiCQ28FpD9H",
+      "programIdConstant": "PROGRAM_ID",
+      "entries": [
+        {
+          "category": "Swap",
+          "discriminator": [
+            247,
+            103,
+            46,
+            184,
+            88,
+            188,
+            56,
+            46
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 1,
+          "instructionName": "execute_deposit",
+          "label": "PERENA_MINT"
+        },
+        {
+          "category": "Swap",
+          "discriminator": [
+            99,
+            227,
+            32,
+            27,
+            95,
+            184,
+            49,
+            2
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 22,
+          "instructionName": "execute_deposit_fee_exempt",
+          "label": "PERENA_MINT_FEE_EXEMPT"
+        },
+        {
+          "category": "Swap",
+          "discriminator": [
+            91,
+            38,
+            26,
+            250,
+            138,
+            227,
+            18,
+            88
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 25,
+          "instructionName": "execute_withdraw_from_external",
+          "label": "PERENA_BURN_FROM_EXTERNAL"
+        },
+        {
+          "category": "Swap",
+          "discriminator": [
+            8,
+            18,
+            138,
+            251,
+            162,
+            172,
+            171,
+            185
+          ],
+          "expectedTargetAccountIndex": null,
+          "id": 26,
+          "instructionName": "execute_withdraw_from_external_fee_exempt",
+          "label": "PERENA_BURN_FROM_EXTERNAL_FEE_EXEMPT"
+        }
+      ]
+    }
+  ]
+}

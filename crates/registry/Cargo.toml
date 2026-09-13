@@ -1,0 +1,19 @@
+[package]
+name = "solana-cpi-standard-registry"
+version.workspace = true
+edition.workspace = true
+description = "Opt-in composition of standard program registries"
+
+[features]
+default = []
+jupiter = ["dep:solana-cpi-standard-jupiter"]
+perena = ["dep:solana-cpi-standard-perena"]
+kamino = ["dep:solana-cpi-standard-kamino"]
+metaplex-token-metadata = ["dep:solana-cpi-standard-metaplex-token-metadata"]
+
+[dependencies]
+solana-cpi-standard-core.workspace = true
+solana-cpi-standard-jupiter = { path = "../jupiter", version = "0.1.0", optional = true }
+solana-cpi-standard-perena = { path = "../perena", version = "0.1.0", optional = true }
+solana-cpi-standard-kamino = { path = "../kamino", version = "0.1.0", optional = true }
+solana-cpi-standard-metaplex-token-metadata = { path = "../metaplex-token-metadata", version = "0.1.0", optional = true }

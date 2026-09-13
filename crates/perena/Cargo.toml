@@ -1,0 +1,13 @@
+[package]
+name = "solana-cpi-standard-perena"
+version.workspace = true
+edition.workspace = true
+description = "perena CPI registry entries"
+
+[dependencies]
+solana-cpi-standard-core.workspace = true
+solana-pubkey.workspace = true
+borsh.workspace = true
+
+[dev-dependencies]
+solana-cpi-standard-core = { workspace = true, features = ["registry-export"] }
