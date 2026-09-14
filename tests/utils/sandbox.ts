@@ -92,14 +92,23 @@ export function encodeRefs(refs: InstructionRefs): Buffer {
     }),
   );
 }
+export interface ExpectedCpiAccount {
+  cpiIndex: number;
+  role: string;
+  address: PublicKey;
+}
+
 export async function buildSandboxInstruction(
   ctx: SandboxTestContext,
   cpis: readonly CpiData[],
   amount?: bigint,
+  expectedAccounts: readonly ExpectedCpiAccount[] = [],
 ) {
   const { refs, accounts, lookupTables } = createCpiRefs(cpis);
   const instruction = await ctx.program.methods
-    .executeCpis(encodeRefs(refs), amount === undefined ? null : new BN(amount.toString()))
+    .executeCpis(encodeRefs(refs), amount === undefined ? null : new BN(amount.toString()), [
+      ...expectedAccounts,
+    ])
     .accountsPartial({ payer: ctx.payer.publicKey, pda: ctx.pda })
     .remainingAccounts(
       accounts.map((account) => ({
@@ -151,8 +160,14 @@ export async function executeCpis(
   ctx: SandboxTestContext,
   cpis: readonly CpiData[],
   amount?: bigint,
+  expectedAccounts: readonly ExpectedCpiAccount[] = [],
 ) {
-  const { instruction, lookupTables } = await buildSandboxInstruction(ctx, cpis, amount);
+  const { instruction, lookupTables } = await buildSandboxInstruction(
+    ctx,
+    cpis,
+    amount,
+    expectedAccounts,
+  );
   return sendInstructions([instruction], { lookupTables });
 }
 export function accountMeta(pubkey: PublicKey | Address, writable = false) {

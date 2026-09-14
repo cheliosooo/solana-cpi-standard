@@ -1,9 +1,18 @@
 use anchor_lang::prelude::*;
 use solana_cpi_standard_core::{
-    args::CpiArgsEntry, invoke::PdaSigner, CpiDispatcher, CpiRefsView, InstructionRefs,
-    U64AmountArgs,
+    args::CpiArgsEntry, invoke::PdaSigner, CpiDispatcher, CpiRefsView, ExpectedAccount,
+    InstructionRefs, U64AmountArgs,
 };
 use solana_cpi_standard_registry::CPI_REGISTRY;
+
+/// Test caller expectations are explicit instruction arguments, independent of
+/// the CPI's account mapping. The payer authorizes only its own sandbox PDA.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct ExpectedCpiAccount {
+    pub cpi_index: u8,
+    pub role: String,
+    pub address: Pubkey,
+}
 
 pub const PDA_SEED: &[u8] = b"cpi-sandbox";
 
@@ -21,6 +30,7 @@ pub fn handler<'info>(
     ctx: Context<'_, '_, 'info, 'info, ExecuteCpis<'info>>,
     refs_data: Vec<u8>,
     amount: Option<u64>,
+    expected_accounts: Vec<ExpectedCpiAccount>,
 ) -> Result<()> {
     let refs = <InstructionRefs as borsh::BorshDeserialize>::try_from_slice(&refs_data)
         .map_err(|_| ProgramError::InvalidInstructionData)?;
@@ -49,13 +59,35 @@ pub fn handler<'info>(
             vec![ctx.bumps.pda],
         ],
     };
-    let dispatcher = CpiDispatcher::new(
+    let mut by_slot: Vec<Vec<ExpectedAccount>> = vec![Vec::new(); refs.cpi.num_cpis()];
+    for expected in expected_accounts {
+        let slot = usize::from(expected.cpi_index);
+        let id = *refs
+            .cpi
+            .types
+            .get(slot)
+            .ok_or(ProgramError::InvalidArgument)?;
+        let entry = CPI_REGISTRY.get(id).ok_or(ProgramError::InvalidArgument)?;
+        let role = entry
+            .required_accounts
+            .iter()
+            .find(|binding| binding.role.0 == expected.role)
+            .ok_or(ProgramError::InvalidArgument)?
+            .role;
+        by_slot[slot].push((role, expected.address));
+    }
+    let mut dispatcher = CpiDispatcher::new(
         &CPI_REGISTRY,
         ctx.accounts.payer.key,
         &refs.cpi,
         ctx.remaining_accounts,
     )
     .pda_signer(&pda_signer);
+    for (slot, accounts) in by_slot.iter().enumerate() {
+        if !accounts.is_empty() {
+            dispatcher = dispatcher.expected_accounts_for_slot(slot as u8, accounts);
+        }
+    }
     match amount {
         Some(amount) => dispatcher.invoke_amount_cpi::<U64AmountArgs>(amount)?,
         None => {

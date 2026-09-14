@@ -96,3 +96,73 @@ test("existing entries cannot be repurposed or silently removed", () => {
   removed.retiredIds = removed.retiredIds.filter((id) => id !== 2);
   assert.throws(() => validateCompatibility(removed, legacy), /stay reserved/);
 });
+
+const namedBaseline = JSON.parse(
+  readFileSync(new URL("./fixtures/namedAccountRegistry.json", import.meta.url)),
+);
+const withdrawal = (catalog) =>
+  catalog.programs.find((p) => p.name === "kamino-lending").entries.find((e) => e.id === 17);
+for (const [name, change] of [
+  [
+    "missing roles",
+    (e) => {
+      delete e.requiredAccounts;
+    },
+  ],
+  [
+    "duplicate role",
+    (e) => {
+      e.requiredAccounts.push({ ...e.requiredAccounts[0] });
+    },
+  ],
+  [
+    "invalid role",
+    (e) => {
+      e.requiredAccounts[0].role = "User Account";
+    },
+  ],
+  [
+    "invalid index",
+    (e) => {
+      e.requiredAccounts[0].index = 254;
+    },
+  ],
+  [
+    "fractional index",
+    (e) => {
+      e.requiredAccounts[0].index = 0.5;
+    },
+  ],
+])
+  test(`catalog rejects ${name} in account bindings`, () => {
+    const c = copy();
+    change(withdrawal(c));
+    assert.throws(() => validateCatalog(c));
+  });
+test("binding baseline rejects weakened, renamed, moved or added requirements", () => {
+  validateCompatibility(original, namedBaseline);
+  for (const change of [
+    (e) => {
+      e.requiredAccounts.pop();
+    },
+    (e) => {
+      e.requiredAccounts[1].role = "other_destination";
+    },
+    (e) => {
+      e.requiredAccounts[1].index = 8;
+    },
+    (e) => {
+      e.requiredAccounts.push({ role: "new_requirement", index: 2 });
+    },
+  ]) {
+    const c = copy();
+    change(withdrawal(c));
+    assert.throws(() => validateCompatibility(c, namedBaseline), /changed account binding/);
+  }
+  const reordered = copy();
+  withdrawal(reordered).requiredAccounts.reverse();
+  validateCompatibility(reordered, namedBaseline);
+  const lostLegacyTarget = copy();
+  withdrawal(lostLegacyTarget).requiredAccounts.shift();
+  assert.throws(() => validateCompatibility(lostLegacyTarget, legacy), /user_account/);
+});

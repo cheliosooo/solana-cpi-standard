@@ -64,7 +64,7 @@ export function discoverRegistryCrates(root = ROOT) {
 
 /** Resolve the program targets from compiled Rust exports without parsing Rust text. */
 export function catalogFromExports(crates, exports) {
-  const catalog = { version: 1, retiredIds: exports[0]?.retiredIds, programs: [] };
+  const catalog = { version: 2, retiredIds: exports[0]?.retiredIds, programs: [] };
   if (crates.length !== exports.length) throw new Error("Missing Rust registry export");
   for (let index = 0; index < crates.length; index++) {
     const crate = crates[index];
@@ -136,6 +136,10 @@ export function readRustRegistry(root = ROOT) {
     validateCompatibility(
       catalog,
       JSON.parse(readFileSync(join(root, "tests/fixtures/legacyRegistry.json"), "utf8")),
+    );
+    validateCompatibility(
+      catalog,
+      JSON.parse(readFileSync(join(root, "tests/fixtures/namedAccountRegistry.json"), "utf8")),
     );
     return catalog;
   } finally {

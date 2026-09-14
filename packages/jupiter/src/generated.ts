@@ -9,7 +9,7 @@ export const CpiTypes = {
 export type CpiType = typeof CpiTypes[keyof typeof CpiTypes];
 
 export const CPI_ENTRIES = [
-  { id: 0, label: "JUPITER_SWAP", programId: PROGRAM_ID, discriminator: null, category: "Swap", expectedTargetAccountIndex: null },
+  { id: 0, label: "JUPITER_SWAP", programId: PROGRAM_ID, discriminator: null, category: "Swap", requiredAccounts: [] },
 ] as const;
 
 export const { createCpiData, fromInstruction } = createIntegration(CPI_ENTRIES);

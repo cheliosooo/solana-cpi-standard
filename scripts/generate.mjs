@@ -18,7 +18,7 @@ export function generate(check = false, root = ROOT) {
     const entries = registered
       .map(
         ({ entry: e, program }) =>
-          `  { id: ${e.id}, label: ${JSON.stringify(e.label)}, programId: ${program.programIdConstant}, discriminator: ${e.discriminator === null ? "null" : `[${e.discriminator.join(", ")}]`}, category: ${JSON.stringify(e.category)}, expectedTargetAccountIndex: ${JSON.stringify(e.expectedTargetAccountIndex)} },`,
+          `  { id: ${e.id}, label: ${JSON.stringify(e.label)}, programId: ${program.programIdConstant}, discriminator: ${e.discriminator === null ? "null" : `[${e.discriminator.join(", ")}]`}, category: ${JSON.stringify(e.category)}, requiredAccounts: ${JSON.stringify(e.requiredAccounts)} },`,
       )
       .join("\n");
     outputs.set(

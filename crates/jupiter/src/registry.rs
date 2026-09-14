@@ -16,7 +16,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[CpiEntry {
     program_id: PROGRAM_ID,
     instruction_name: "",
     category: Some(CpiCategory::Swap),
-    expected_target_account_index: None,
+    required_accounts: &[],
 }];
 
 #[cfg(test)]

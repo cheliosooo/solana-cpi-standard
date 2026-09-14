@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "retiredIds": [
     2,
     3,
@@ -19,10 +19,10 @@
         {
           "category": "Swap",
           "discriminator": null,
-          "expectedTargetAccountIndex": null,
           "id": 0,
           "instructionName": "",
-          "label": "JUPITER_SWAP"
+          "label": "JUPITER_SWAP",
+          "requiredAccounts": []
         }
       ]
     },
@@ -44,10 +44,10 @@
             15,
             162
           ],
-          "expectedTargetAccountIndex": null,
           "id": 8,
           "instructionName": "init_user_metadata",
-          "label": "K_INIT_USER_METADATA"
+          "label": "K_INIT_USER_METADATA",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -61,10 +61,10 @@
             159,
             96
           ],
-          "expectedTargetAccountIndex": null,
           "id": 9,
           "instructionName": "init_obligation",
-          "label": "K_INIT_OBLIGATION"
+          "label": "K_INIT_OBLIGATION",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -78,10 +78,10 @@
             168,
             164
           ],
-          "expectedTargetAccountIndex": null,
           "id": 10,
           "instructionName": "init_obligation_farms_for_reserve",
-          "label": "K_INIT_USER_FARM"
+          "label": "K_INIT_USER_FARM",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -95,10 +95,10 @@
             25,
             102
           ],
-          "expectedTargetAccountIndex": null,
           "id": 11,
           "instructionName": "refresh_reserve",
-          "label": "K_REFRESH_RESERVE"
+          "label": "K_REFRESH_RESERVE",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -112,10 +112,10 @@
             72,
             89
           ],
-          "expectedTargetAccountIndex": null,
           "id": 12,
           "instructionName": "refresh_obligation",
-          "label": "K_REFRESH_OBLIGATION"
+          "label": "K_REFRESH_OBLIGATION",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -129,10 +129,10 @@
             248,
             3
           ],
-          "expectedTargetAccountIndex": null,
           "id": 13,
           "instructionName": "refresh_obligation_farms_for_reserve",
-          "label": "K_REFRESH_USER_FARM"
+          "label": "K_REFRESH_USER_FARM",
+          "requiredAccounts": []
         },
         {
           "category": null,
@@ -146,10 +146,10 @@
             7,
             147
           ],
-          "expectedTargetAccountIndex": null,
           "id": 15,
           "instructionName": "request_elevation_group",
-          "label": "K_REQUEST_ELEVATION_GROUP"
+          "label": "K_REQUEST_ELEVATION_GROUP",
+          "requiredAccounts": []
         },
         {
           "category": "Deposit",
@@ -163,10 +163,19 @@
             102,
             175
           ],
-          "expectedTargetAccountIndex": 1,
           "id": 16,
           "instructionName": "deposit_reserve_liquidity_and_obligation_collateral_v2",
-          "label": "K_DEPOSIT"
+          "label": "K_DEPOSIT",
+          "requiredAccounts": [
+            {
+              "index": 1,
+              "role": "user_account"
+            },
+            {
+              "index": 9,
+              "role": "source_token_account"
+            }
+          ]
         },
         {
           "category": "Withdraw",
@@ -180,10 +189,19 @@
             20,
             7
           ],
-          "expectedTargetAccountIndex": 1,
           "id": 17,
           "instructionName": "withdraw_obligation_collateral_and_redeem_reserve_collateral_v2",
-          "label": "K_WITHDRAW"
+          "label": "K_WITHDRAW",
+          "requiredAccounts": [
+            {
+              "index": 1,
+              "role": "user_account"
+            },
+            {
+              "index": 9,
+              "role": "destination_token_account"
+            }
+          ]
         },
         {
           "category": "Borrow",
@@ -197,10 +215,19 @@
             194,
             6
           ],
-          "expectedTargetAccountIndex": 1,
           "id": 18,
           "instructionName": "borrow_obligation_liquidity_v2",
-          "label": "K_BORROW"
+          "label": "K_BORROW",
+          "requiredAccounts": [
+            {
+              "index": 1,
+              "role": "user_account"
+            },
+            {
+              "index": 8,
+              "role": "destination_token_account"
+            }
+          ]
         },
         {
           "category": "Repay",
@@ -214,10 +241,19 @@
             210,
             144
           ],
-          "expectedTargetAccountIndex": 1,
           "id": 19,
           "instructionName": "repay_obligation_liquidity_v2",
-          "label": "K_REPAY"
+          "label": "K_REPAY",
+          "requiredAccounts": [
+            {
+              "index": 1,
+              "role": "user_account"
+            },
+            {
+              "index": 6,
+              "role": "source_token_account"
+            }
+          ]
         }
       ]
     },
@@ -239,10 +275,10 @@
             226,
             188
           ],
-          "expectedTargetAccountIndex": null,
           "id": 14,
           "instructionName": "harvest_reward",
-          "label": "K_HARVEST_REWARD"
+          "label": "K_HARVEST_REWARD",
+          "requiredAccounts": []
         }
       ]
     },
@@ -254,18 +290,18 @@
         {
           "category": "UpdateMintMetadata",
           "discriminator": null,
-          "expectedTargetAccountIndex": null,
           "id": 20,
           "instructionName": "",
-          "label": "MPL_UPDATE_METADATA"
+          "label": "MPL_UPDATE_METADATA",
+          "requiredAccounts": []
         },
         {
           "category": "UpdateMintMetadata",
           "discriminator": null,
-          "expectedTargetAccountIndex": null,
           "id": 21,
           "instructionName": "",
-          "label": "MPL_CREATE_METADATA"
+          "label": "MPL_CREATE_METADATA",
+          "requiredAccounts": []
         }
       ]
     },
@@ -286,10 +322,10 @@
             56,
             46
           ],
-          "expectedTargetAccountIndex": null,
           "id": 1,
           "instructionName": "execute_deposit",
-          "label": "PERENA_MINT"
+          "label": "PERENA_MINT",
+          "requiredAccounts": []
         },
         {
           "category": "Swap",
@@ -303,10 +339,10 @@
             49,
             2
           ],
-          "expectedTargetAccountIndex": null,
           "id": 22,
           "instructionName": "execute_deposit_fee_exempt",
-          "label": "PERENA_MINT_FEE_EXEMPT"
+          "label": "PERENA_MINT_FEE_EXEMPT",
+          "requiredAccounts": []
         },
         {
           "category": "Swap",
@@ -320,10 +356,10 @@
             18,
             88
           ],
-          "expectedTargetAccountIndex": null,
           "id": 25,
           "instructionName": "execute_withdraw_from_external",
-          "label": "PERENA_BURN_FROM_EXTERNAL"
+          "label": "PERENA_BURN_FROM_EXTERNAL",
+          "requiredAccounts": []
         },
         {
           "category": "Swap",
@@ -337,10 +373,10 @@
             171,
             185
           ],
-          "expectedTargetAccountIndex": null,
           "id": 26,
           "instructionName": "execute_withdraw_from_external_fee_exempt",
-          "label": "PERENA_BURN_FROM_EXTERNAL_FEE_EXEMPT"
+          "label": "PERENA_BURN_FROM_EXTERNAL_FEE_EXEMPT",
+          "requiredAccounts": []
         }
       ]
     }

@@ -1,6 +1,7 @@
 # Fixtures
 
 - `legacyRegistry.json`: immutable allocation and instruction-identity baseline copied from `tokenized-positions` commit `a2b1bb85b6cc698ae5a9404079fbc7306ad0be55`. Extend when publishing newly allocated IDs; do not rewrite old allocations to make a compatibility failure pass.
+- `namedAccountRegistry.json`: schema-v2 baseline for the named-role migration. Preserves the original user-position indices and freezes Kamino deposit/repayment sources and withdrawal/borrow destinations. Existing requirements cannot be weakened or repurposed; use new CPI IDs for later changes.
 - `instructionRefs.bin`: original Borsh layout for two CPI slots. Indices `[0,1,2,3,2,1]`, lengths `[3,3]`, types `[0,16]`, packed args `[2,0,170,187,255,255]`, tracked `[1]`. Every vector is prefixed by its u32 LE length. Both Rust and TypeScript tests compare against these exact bytes.
 
 - `keypairs/sandbox-local.json`: public local sandbox fixture copied from `tokenized-positions/tests/fixtures/keypairs/test_sandbox-keypair.json`, address `4dcuyHs4K97LckqNVQEazKAwygJtAATLiuNWFsvFh11m`. Used by the local Anchor configuration. Never use it for real funds or production authority.

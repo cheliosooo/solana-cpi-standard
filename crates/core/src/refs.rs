@@ -1,4 +1,6 @@
 //! Existing Borsh wire layout, with checked account access and explicit registry selection.
+use crate::accounts::{validate_cpi_accounts, validate_expected_accounts};
+use crate::ExpectedAccount;
 use crate::{
     args::{CpiArgsEntry, CpiArgsReader},
     invoke::{build_account_metas_into, execute_cpi_with_reusable_buffers, PdaSigner},
@@ -156,7 +158,6 @@ fn invoke_with_buffers<'info, R: CpiRefsView + ?Sized>(
     remaining: &[AccountInfo<'info>],
     args: &[u8],
     pda_signer: Option<&PdaSigner>,
-    expected_target: Option<&Pubkey>,
     buffers: &mut CpiInvokeBuffers<'info>,
 ) -> ProgramResult {
     let id = *refs
@@ -174,25 +175,6 @@ fn invoke_with_buffers<'info, R: CpiRefsView + ?Sized>(
                 .ok_or(ProgramError::NotEnoughAccountKeys)?
                 .clone(),
         );
-    }
-    let program = buffers
-        .accounts
-        .first()
-        .ok_or(ProgramError::NotEnoughAccountKeys)?;
-    if program.key != &entry.program_id {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-    if !program.executable {
-        return Err(ProgramError::InvalidAccountData);
-    }
-    if let (Some(index), Some(expected)) = (entry.expected_target_account_index, expected_target) {
-        let target = buffers
-            .accounts
-            .get(usize::from(index) + 1)
-            .ok_or(ProgramError::NotEnoughAccountKeys)?;
-        if target.key != expected {
-            return Err(ProgramError::InvalidAccountData);
-        }
     }
     buffers.data.clear();
     if let Some(discriminator) = entry.discriminator() {
@@ -224,9 +206,21 @@ pub fn invoke_cpi<'info, R: CpiRefsView + ?Sized>(
     remaining: &[AccountInfo<'info>],
     args: &[u8],
     pda_signer: Option<&PdaSigner>,
-    expected_target: Option<&Pubkey>,
+    expected_accounts: &[ExpectedAccount],
 ) -> ProgramResult {
     refs.validate(registry, remaining.len())?;
+    validate_expected_accounts(expected_accounts)?;
+    let id = *refs
+        .cpi_types()
+        .get(usize::from(cpi_index))
+        .ok_or(ProgramError::InvalidArgument)?;
+    let entry = registry.get(id).ok_or(ProgramError::InvalidArgument)?;
+    validate_cpi_accounts(
+        entry,
+        refs.get_indices_for_cpi(cpi_index)?,
+        remaining,
+        expected_accounts.iter(),
+    )?;
     invoke_with_buffers(
         registry,
         signer,
@@ -235,9 +229,26 @@ pub fn invoke_cpi<'info, R: CpiRefsView + ?Sized>(
         remaining,
         args,
         pda_signer,
-        expected_target,
         &mut CpiInvokeBuffers::default(),
     )
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AccountScope {
+    Category(CpiCategory),
+    Slot(u8),
+}
+impl AccountScope {
+    fn matches(self, slot: usize, category: Option<CpiCategory>) -> bool {
+        match self {
+            Self::Category(expected) => category == Some(expected),
+            Self::Slot(expected) => slot == usize::from(expected),
+        }
+    }
+}
+struct AccountExpectations<'a> {
+    scope: AccountScope,
+    accounts: &'a [ExpectedAccount],
 }
 
 /// Reuses invocation buffers across a chain. The host program remains responsible
@@ -251,7 +262,7 @@ pub struct CpiDispatcher<'a, 'info, R: CpiRefsView + ?Sized> {
     required_order: Option<&'a [CpiCategory]>,
     expected_count: Option<usize>,
     maximum_count: Option<usize>,
-    expected_target: Option<&'a Pubkey>,
+    account_expectations: Vec<AccountExpectations<'a>>,
 }
 impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
     pub fn new(
@@ -269,7 +280,7 @@ impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
             required_order: None,
             expected_count: None,
             maximum_count: None,
-            expected_target: None,
+            account_expectations: Vec::new(),
         }
     }
     pub fn pda_signer(mut self, signer: &'a PdaSigner) -> Self {
@@ -288,8 +299,27 @@ impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
         self.maximum_count = Some(count);
         self
     }
-    pub fn expected_target_account(mut self, account: &'a Pubkey) -> Self {
-        self.expected_target = Some(account);
+    /// Require these roles on every CPI in the selected category. Expectations
+    /// from overlapping category/slot scopes are additive; a slot cannot override policy.
+    pub fn expected_accounts_for(
+        mut self,
+        category: CpiCategory,
+        accounts: &'a [ExpectedAccount],
+    ) -> Self {
+        self.account_expectations.push(AccountExpectations {
+            scope: AccountScope::Category(category),
+            accounts,
+        });
+        self
+    }
+
+    /// Bind one concrete CPI slot, including an uncategorized prerequisite call.
+    /// Use this for repeated actions whose expected addresses differ.
+    pub fn expected_accounts_for_slot(mut self, slot: u8, accounts: &'a [ExpectedAccount]) -> Self {
+        self.account_expectations.push(AccountExpectations {
+            scope: AccountScope::Slot(slot),
+            accounts,
+        });
         self
     }
 
@@ -302,12 +332,50 @@ impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
                 order,
                 self.expected_count,
                 self.maximum_count,
-            ),
+            )?,
             None if self.expected_count.is_some() || self.maximum_count.is_some() => {
-                Err(ProgramError::InvalidArgument)
+                return Err(ProgramError::InvalidArgument)
             }
-            None => Ok(()),
+            None => (),
         }
+        for (i, expectations) in self.account_expectations.iter().enumerate() {
+            validate_expected_accounts(expectations.accounts)?;
+            if expectations.accounts.is_empty()
+                || self.account_expectations[..i]
+                    .iter()
+                    .any(|previous| previous.scope == expectations.scope)
+            {
+                return Err(ProgramError::InvalidArgument);
+            }
+            // Reject unused policies (e.g. a mistyped category or out-of-range slot).
+            if !self.refs.cpi_types().iter().enumerate().any(|(slot, id)| {
+                self.registry
+                    .get(*id)
+                    .is_some_and(|entry| expectations.scope.matches(slot, entry.category))
+            }) {
+                return Err(ProgramError::InvalidArgument);
+            }
+        }
+        // Account keys are immutable. Validate the entire plan, including deferred
+        // amount slots and uncategorized setup calls, before executing its first CPI.
+        for (slot, id) in self.refs.cpi_types().iter().enumerate() {
+            let entry = self
+                .registry
+                .get(*id)
+                .ok_or(ProgramError::InvalidArgument)?;
+            let expected = self
+                .account_expectations
+                .iter()
+                .filter(|set| set.scope.matches(slot, entry.category))
+                .flat_map(|set| set.accounts.iter());
+            validate_cpi_accounts(
+                entry,
+                self.refs.get_indices_for_cpi(slot as u8)?,
+                self.remaining,
+                expected,
+            )?;
+        }
+        Ok(())
     }
 
     fn invoke_until_skip(
@@ -326,7 +394,6 @@ impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
                     self.remaining,
                     args,
                     self.pda_signer,
-                    self.expected_target,
                     buffers,
                 )?,
                 CpiArgsEntry::Skip => return Ok(slot),
@@ -384,7 +451,6 @@ impl<'a, 'info, R: CpiRefsView + ?Sized> CpiDispatcher<'a, 'info, R> {
             self.remaining,
             &args,
             self.pda_signer,
-            self.expected_target,
             &mut buffers,
         )?;
         self.invoke_until_skip(slot + 1, &mut reader, &mut buffers)?;
@@ -403,7 +469,10 @@ mod tests {
             program_id: Pubkey::new_from_array([1; 32]),
             instruction_name: "deposit",
             category: Some(CpiCategory::Deposit),
-            expected_target_account_index: Some(1),
+            required_accounts: &[crate::AccountBinding {
+                role: crate::USER_ACCOUNT,
+                index: 1,
+            }],
         },
         CpiEntry {
             id: 101,
@@ -411,7 +480,7 @@ mod tests {
             program_id: Pubkey::new_from_array([1; 32]),
             instruction_name: "",
             category: Some(CpiCategory::Swap),
-            expected_target_account_index: None,
+            required_accounts: &[],
         },
     ];
     static REGISTRY: CpiRegistry = CpiRegistry::new(&[ENTRIES]);
@@ -457,7 +526,6 @@ mod tests {
                 &accounts,
                 &[7, 0],
                 None,
-                Some(accounts[2].key),
                 &mut buffers
             ),
             Ok(())
@@ -484,7 +552,6 @@ mod tests {
                 &accounts,
                 &[3, 4],
                 None,
-                None,
                 &mut buffers
             ),
             Ok(())
@@ -502,12 +569,30 @@ mod tests {
         let mut wrong = accounts.clone();
         wrong[0] = account(Pubkey::new_unique(), false, false, true);
         assert_eq!(
-            invoke_cpi(&REGISTRY, signer, 0, &value, &wrong, &[], None, None),
+            invoke_cpi(
+                &REGISTRY,
+                signer,
+                0,
+                &value,
+                &wrong,
+                &[],
+                None,
+                &[(crate::USER_ACCOUNT, *accounts[2].key)]
+            ),
             Err(ProgramError::IncorrectProgramId)
         );
         wrong[0] = account(ENTRIES[0].program_id, false, false, false);
         assert_eq!(
-            invoke_cpi(&REGISTRY, signer, 0, &value, &wrong, &[], None, None),
+            invoke_cpi(
+                &REGISTRY,
+                signer,
+                0,
+                &value,
+                &wrong,
+                &[],
+                None,
+                &[(crate::USER_ACCOUNT, *accounts[2].key)]
+            ),
             Err(ProgramError::InvalidAccountData)
         );
         assert_eq!(
@@ -519,7 +604,7 @@ mod tests {
                 &accounts,
                 &[],
                 None,
-                Some(signer)
+                &[(crate::USER_ACCOUNT, *signer)]
             ),
             Err(ProgramError::InvalidAccountData)
         );
@@ -537,7 +622,7 @@ mod tests {
                 &accounts,
                 &[],
                 None,
-                Some(signer)
+                &[(crate::USER_ACCOUNT, *signer)]
             ),
             Err(ProgramError::NotEnoughAccountKeys)
         );
@@ -551,23 +636,29 @@ mod tests {
             vec![100, 100],
             vec![255; 4],
         );
+        let expected = [(crate::USER_ACCOUNT, *accounts[2].key)];
         let result = CpiDispatcher::new(&REGISTRY, accounts[1].key, &value, &accounts)
+            .expected_accounts_for(CpiCategory::Deposit, &expected)
             .invoke_amount_cpi_with::<U64AmountArgs, _, ProgramError>(|| {
                 panic!("must reject before callback")
             });
         assert_eq!(result, Err(ProgramError::InvalidArgument));
         let value = refs(100, vec![255, 255]);
         assert_eq!(
-            CpiDispatcher::new(&REGISTRY, accounts[1].key, &value, &accounts).invoke(),
+            CpiDispatcher::new(&REGISTRY, accounts[1].key, &value, &accounts)
+                .expected_accounts_for(CpiCategory::Deposit, &expected)
+                .invoke(),
             Ok(0)
         );
         assert_eq!(
             CpiDispatcher::new(&REGISTRY, accounts[1].key, &value, &accounts)
+                .expected_accounts_for(CpiCategory::Deposit, &expected)
                 .invoke_amount_cpi::<U64AmountArgs>(123),
             Ok(())
         );
         assert_eq!(
             CpiDispatcher::new(&REGISTRY, accounts[1].key, &value, &accounts)
+                .expected_accounts_for(CpiCategory::Deposit, &expected)
                 .invoke_amount_cpi_with::<U64AmountArgs, _, ProgramError>(|| Err(
                     ProgramError::Custom(91)
                 )),
@@ -592,7 +683,6 @@ mod tests {
                 &accounts,
                 &[42],
                 Some(&pda),
-                None,
                 &mut buffers
             ),
             Err(ProgramError::InvalidSeeds)

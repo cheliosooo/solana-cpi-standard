@@ -24,7 +24,7 @@ pub fn write_registry(crate_name: &str, programs: &[(&str, &str, Pubkey)], entri
                 "instructionName": entry.instruction_name,
                 "discriminator": entry.discriminator(),
                 "category": entry.category.map(|category| format!("{category:?}")),
-                "expectedTargetAccountIndex": entry.expected_target_account_index,
+                "requiredAccounts": entry.required_accounts.iter().map(|binding| json!({ "role": binding.role.0, "index": binding.index })).collect::<Vec<_>>(),
             })
         })
         .collect();

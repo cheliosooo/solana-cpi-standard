@@ -1,5 +1,8 @@
 //! Authoritative Rust CPI registry. Run pnpm codegen after editing entries.
-use solana_cpi_standard_core::{CpiCategory, CpiEntry};
+use solana_cpi_standard_core::{
+    AccountBinding, CpiCategory, CpiEntry, DESTINATION_TOKEN_ACCOUNT, SOURCE_TOKEN_ACCOUNT,
+    USER_ACCOUNT,
+};
 use solana_pubkey::{pubkey, Pubkey};
 
 pub const KAMINO_LENDING_PROGRAM_ID: Pubkey =
@@ -30,7 +33,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "init_user_metadata",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_INIT_OBLIGATION,
@@ -38,7 +41,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "init_obligation",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_INIT_USER_FARM,
@@ -46,7 +49,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "init_obligation_farms_for_reserve",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_REFRESH_RESERVE,
@@ -54,7 +57,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "refresh_reserve",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_REFRESH_OBLIGATION,
@@ -62,7 +65,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "refresh_obligation",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_REFRESH_USER_FARM,
@@ -70,7 +73,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "refresh_obligation_farms_for_reserve",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_HARVEST_REWARD,
@@ -78,7 +81,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_FARMS_PROGRAM_ID,
         instruction_name: "harvest_reward",
         category: Some(CpiCategory::ClaimIncentives),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_REQUEST_ELEVATION_GROUP,
@@ -86,7 +89,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "request_elevation_group",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::K_DEPOSIT,
@@ -94,7 +97,16 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "deposit_reserve_liquidity_and_obligation_collateral_v2",
         category: Some(CpiCategory::Deposit),
-        expected_target_account_index: Some(1),
+        required_accounts: &[
+            AccountBinding {
+                role: USER_ACCOUNT,
+                index: 1,
+            },
+            AccountBinding {
+                role: SOURCE_TOKEN_ACCOUNT,
+                index: 9,
+            },
+        ],
     },
     CpiEntry {
         id: CpiType::K_WITHDRAW,
@@ -102,7 +114,16 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "withdraw_obligation_collateral_and_redeem_reserve_collateral_v2",
         category: Some(CpiCategory::Withdraw),
-        expected_target_account_index: Some(1),
+        required_accounts: &[
+            AccountBinding {
+                role: USER_ACCOUNT,
+                index: 1,
+            },
+            AccountBinding {
+                role: DESTINATION_TOKEN_ACCOUNT,
+                index: 9,
+            },
+        ],
     },
     CpiEntry {
         id: CpiType::K_BORROW,
@@ -110,7 +131,16 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "borrow_obligation_liquidity_v2",
         category: Some(CpiCategory::Borrow),
-        expected_target_account_index: Some(1),
+        required_accounts: &[
+            AccountBinding {
+                role: USER_ACCOUNT,
+                index: 1,
+            },
+            AccountBinding {
+                role: DESTINATION_TOKEN_ACCOUNT,
+                index: 8,
+            },
+        ],
     },
     CpiEntry {
         id: CpiType::K_REPAY,
@@ -118,7 +148,16 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: KAMINO_LENDING_PROGRAM_ID,
         instruction_name: "repay_obligation_liquidity_v2",
         category: Some(CpiCategory::Repay),
-        expected_target_account_index: Some(1),
+        required_accounts: &[
+            AccountBinding {
+                role: USER_ACCOUNT,
+                index: 1,
+            },
+            AccountBinding {
+                role: SOURCE_TOKEN_ACCOUNT,
+                index: 6,
+            },
+        ],
     },
 ];
 

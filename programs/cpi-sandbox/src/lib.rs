@@ -16,7 +16,8 @@ pub mod cpi_sandbox {
         ctx: Context<'_, '_, 'info, 'info, ExecuteCpis<'info>>,
         refs_data: Vec<u8>,
         amount: Option<u64>,
+        expected_accounts: Vec<ExpectedCpiAccount>,
     ) -> Result<()> {
-        instructions::execute_cpis::handler(ctx, refs_data, amount)
+        instructions::execute_cpis::handler(ctx, refs_data, amount, expected_accounts)
     }
 }

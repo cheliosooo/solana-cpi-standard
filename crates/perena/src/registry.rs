@@ -20,7 +20,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "execute_deposit",
         category: Some(CpiCategory::Swap),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::PERENA_MINT_FEE_EXEMPT,
@@ -28,7 +28,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "execute_deposit_fee_exempt",
         category: Some(CpiCategory::Swap),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::PERENA_BURN_FROM_EXTERNAL,
@@ -36,7 +36,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "execute_withdraw_from_external",
         category: Some(CpiCategory::Swap),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::PERENA_BURN_FROM_EXTERNAL_FEE_EXEMPT,
@@ -44,7 +44,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "execute_withdraw_from_external_fee_exempt",
         category: Some(CpiCategory::Swap),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
 ];
 

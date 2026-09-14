@@ -1,4 +1,5 @@
 //! Compose program registries without a dependency from core to any integration.
+use crate::AccountBinding;
 use sha2::{Digest, Sha256};
 use solana_pubkey::Pubkey;
 
@@ -25,8 +26,8 @@ pub struct CpiEntry {
     /// Empty for raw instruction data; otherwise an Anchor instruction name.
     pub instruction_name: &'static str,
     pub category: Option<CpiCategory>,
-    /// Target index in instruction accounts, excluding the prepended program.
-    pub expected_target_account_index: Option<u8>,
+    /// Every binding is mandatory whenever this entry is invoked.
+    pub required_accounts: &'static [AccountBinding],
 }
 
 pub fn anchor_discriminator(instruction_name: &str) -> [u8; 8] {
@@ -64,7 +65,7 @@ impl CpiRegistry {
     /// ```compile_fail
     /// use solana_cpi_standard_core::{CpiRegistry, CpiEntry};
     /// use solana_pubkey::Pubkey;
-    /// static ENTRY: &[CpiEntry] = &[CpiEntry { id: 100, label: "TEST", program_id: Pubkey::new_from_array([1; 32]), instruction_name: "test", category: None, expected_target_account_index: None }];
+    /// static ENTRY: &[CpiEntry] = &[CpiEntry { id: 100, label: "TEST", program_id: Pubkey::new_from_array([1; 32]), instruction_name: "test", category: None, required_accounts: &[] }];
     /// static INVALID: CpiRegistry = CpiRegistry::new(&[ENTRY, ENTRY]);
     /// ```
     pub const fn new(programs: &'static [&'static [CpiEntry]]) -> Self {
@@ -78,6 +79,21 @@ impl CpiRegistry {
         while program < programs.len() {
             let mut entry = 0;
             while entry < programs[program].len() {
+                let bindings = programs[program][entry].required_accounts;
+                let mut binding = 0;
+                while binding < bindings.len() {
+                    assert!(bindings[binding].role.is_valid(), "invalid account role");
+                    assert!(bindings[binding].index <= 253, "invalid account index");
+                    let mut previous = 0;
+                    while previous < binding {
+                        assert!(
+                            !bindings[previous].role.same_as(bindings[binding].role),
+                            "duplicate account role"
+                        );
+                        previous += 1;
+                    }
+                    binding += 1;
+                }
                 let id = programs[program][entry].id as usize;
                 assert!(!used[id], "duplicate or retired CPI ID");
                 used[id] = true;

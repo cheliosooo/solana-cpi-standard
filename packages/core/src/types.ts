@@ -32,11 +32,20 @@ export type CpiCategory =
   | "Repay"
   | "ClaimIncentives"
   | "UpdateMintMetadata";
+/** Semantic role names, distinct from Solana Kit signer/writable AccountRole flags. */
+export type CpiAccountRole = string;
+export const USER_ACCOUNT = "user_account";
+export const SOURCE_TOKEN_ACCOUNT = "source_token_account";
+export const DESTINATION_TOKEN_ACCOUNT = "destination_token_account";
+export interface AccountBinding {
+  readonly role: CpiAccountRole;
+  readonly index: number;
+}
 export interface CpiEntry {
   readonly id: number;
   readonly label: string;
   readonly programId: Address;
   readonly discriminator: readonly number[] | null;
   readonly category: CpiCategory | null;
-  readonly expectedTargetAccountIndex: number | null;
+  readonly requiredAccounts: readonly AccountBinding[];
 }

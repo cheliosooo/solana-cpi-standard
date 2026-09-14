@@ -18,7 +18,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "",
         category: Some(CpiCategory::UpdateMintMetadata),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: CpiType::MPL_CREATE_METADATA,
@@ -26,7 +26,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[
         program_id: PROGRAM_ID,
         instruction_name: "",
         category: Some(CpiCategory::UpdateMintMetadata),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
 ];
 

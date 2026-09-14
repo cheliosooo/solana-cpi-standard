@@ -13,7 +13,7 @@ import {
 } from "../scripts/rust-registry.mjs";
 import { generate } from "../scripts/generate.mjs";
 
-const fixtureSource = `use solana_cpi_standard_core::{CpiCategory, CpiEntry};
+const fixtureSource = `use solana_cpi_standard_core::{AccountBinding, CpiCategory, CpiEntry, USER_ACCOUNT};
 use solana_pubkey::{pubkey, Pubkey};
 pub const PROGRAM_ID: Pubkey = pubkey!("11111111111111111111111111111111");
 pub static CPI_ENTRIES: &[CpiEntry] = &[CpiEntry {
@@ -22,7 +22,7 @@ pub static CPI_ENTRIES: &[CpiEntry] = &[CpiEntry {
     program_id: PROGRAM_ID,
     instruction_name: "fixture_instruction",
     category: Some(CpiCategory::Swap),
-    expected_target_account_index: Some(0),
+    required_accounts: &[AccountBinding { role: USER_ACCOUNT, index: 0 }],
 }];
 #[cfg(test)]
 solana_cpi_standard_core::export_cpi_registry! { "export-fixture" => PROGRAM_ID }
@@ -43,6 +43,7 @@ test(
         "crates",
         "programs",
         "tests/fixtures/legacyRegistry.json",
+        "tests/fixtures/namedAccountRegistry.json",
       ]) {
         const target = join(root, file);
         mkdirSync(join(target, ".."), { recursive: true });
@@ -91,7 +92,8 @@ solana-cpi-standard-core = { workspace = true, features = ["registry-export"] }
       const tsPath = join(root, "packages/export-fixture/src/generated.ts");
       const generated = readFileSync(tsPath, "utf8");
       assert.match(generated, /EXPORT_FIXTURE: 200/);
-      assert.match(generated, /expectedTargetAccountIndex: 0/);
+      assert.deepEqual(fixture.entries[0].requiredAccounts, [{ role: "user_account", index: 0 }]);
+      assert.match(generated, /requiredAccounts/);
       assert.equal(readFileSync(source, "utf8"), fixtureSource);
       generate(true, root);
       writeFileSync(tsPath, `${generated}\n`);
@@ -131,7 +133,7 @@ test("Rust export validation rejects mismatched retirement data and undeclared t
     instructionName: "",
     discriminator: null,
     category: null,
-    expectedTargetAccountIndex: null,
+    requiredAccounts: [],
   };
   const first = {
     crate: "crate-a",

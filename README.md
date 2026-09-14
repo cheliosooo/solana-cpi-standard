@@ -41,29 +41,96 @@ const { accounts, refs, lookupTables } = createCpiRefs([deposit]);
 ## Rust
 
 ```rust
-use solana_cpi_standard_core::{CpiRegistry, CpiDispatcher, CpiCategory, U64AmountArgs};
+use solana_cpi_standard_core::{CpiRegistry, CpiDispatcher, CpiCategory, U64AmountArgs, USER_ACCOUNT, SOURCE_TOKEN_ACCOUNT};
 use solana_cpi_standard_kamino::CPI_ENTRIES;
 
 static REGISTRY: CpiRegistry = CpiRegistry::new(&[CPI_ENTRIES]);
 
 // Inside the host instruction, after validating authority and account ownership:
+let expected = [
+    (USER_ACCOUNT, *obligation),
+    (SOURCE_TOKEN_ACCOUNT, *source_token_account),
+];
 CpiDispatcher::new(&REGISTRY, signer, &refs.cpi, remaining_accounts)
     .pda_signer(&pda_signer)
     .required_order(&[CpiCategory::Deposit])
     .expected_count(1)
-    .expected_target_account(obligation)
+    .expected_accounts_for(CpiCategory::Deposit, &expected)
     .invoke_amount_cpi::<U64AmountArgs>(amount)?;
 ```
 
 Registry composition rejects duplicate and retired IDs. A `static` initializer makes collisions a compile error. Enable the matching features on `solana-cpi-standard-registry` if you prefer its `CPI_REGISTRY` to direct composition.
 
-The dispatcher preserves reusable invocation buffers, category order/count validation, explicit outer/PDA signer selection, and optional target-account checks. `invoke()` returns the first skip slot or the number of completed slots. `invoke_amount_cpi` requires exactly one skip. `invoke_amount_cpi_with::<Args, _, Error>(provider)` computes the amount after prerequisite CPIs and propagates application errors.
+The dispatcher preserves reusable invocation buffers, category order/count validation, explicit outer/PDA signer selection, and mandatory named account bindings. `invoke()` returns the first skip slot or the number of completed slots. `invoke_amount_cpi` requires exactly one skip. `invoke_amount_cpi_with::<Args, _, Error>(provider)` computes the amount after prerequisite CPIs and propagates application errors.
 
 Applications may implement `CpiRefsView` for their own persisted plan accounts. This keeps storage capacity, ownership, rent, and account lifecycle decisions with the host program.
 
+## Named account validation
+
+`CpiEntry.required_accounts` maps semantic roles to zero-based instruction account indices, **excluding the prepended program account**. `AccountRole` wraps a static string; common constants are `USER_ACCOUNT`, `SOURCE_TOKEN_ACCOUNT`, and `DESTINATION_TOKEN_ACCOUNT`. `USER_ACCOUNT` means protocol position/state, not its wallet authority. Integrations can add names such as `AccountRole("protocol:custom_role")`; use lowercase names matching `[a-z][a-z0-9_:]*`. Registry construction rejects invalid names, duplicate roles, and indices above 253. Distinct roles may intentionally reference the same account slot.
+
+```rust
+// Within a withdrawal CpiEntry; use the protocol's real account positions.
+required_accounts: &[
+    AccountBinding { role: USER_ACCOUNT, index: USER_ACCOUNT_INDEX },
+    AccountBinding {
+        role: DESTINATION_TOKEN_ACCOUNT,
+        index: DESTINATION_INDEX,
+    },
+],
+```
+
+The host supplies expected addresses from **accounts it has validated against its own state and authority rules**. Client-supplied expected pubkeys or keys copied from the same untrusted CPI mapping do not establish authorization.
+
+```rust
+let expected = [
+    (USER_ACCOUNT, ctx.accounts.position.key()),
+    (DESTINATION_TOKEN_ACCOUNT, ctx.accounts.destination.key()),
+];
+CpiDispatcher::new(&REGISTRY, signer, &refs.cpi, remaining_accounts)
+    .pda_signer(&pda_signer)
+    .required_order(&[CpiCategory::Withdraw])
+    .expected_count(1)
+    .expected_accounts_for(CpiCategory::Withdraw, &expected)
+    .invoke()?;
+```
+
+Validation works in both directions: every registry requirement needs a host expectation, and every role required by the host must exist on the selected CPI entry. Missing roles/expectations fail with `InvalidArgument`; substituted addresses fail with `InvalidAccountData`; missing mapped accounts fail with `NotEnoughAccountKeys`. This prevents selecting a less constrained entry to bypass a host's destination requirement.
+
+`expected_accounts_for(category, accounts)` applies to **every** CPI in that category. `expected_accounts_for_slot(slot, accounts)` applies to a zero-based CPI slot, including an uncategorized setup call. For two withdrawals with different destinations, bind the common user account by category and each destination by slot:
+
+```rust
+let user = [(USER_ACCOUNT, position_key)];
+let first = [(DESTINATION_TOKEN_ACCOUNT, first_destination)];
+let second = [(DESTINATION_TOKEN_ACCOUNT, second_destination)];
+let dispatcher = CpiDispatcher::new(&REGISTRY, signer, &refs.cpi, remaining_accounts)
+    .expected_accounts_for(CpiCategory::Withdraw, &user)
+    .expected_accounts_for_slot(0, &first)
+    .expected_accounts_for_slot(1, &second);
+```
+
+Overlapping scopes **add constraints**; slot bindings cannot override category policy. Conflicting expectations fail. Duplicate roles within a set, duplicate scopes, empty sets, unmatched categories, and invalid slots are rejected. The dispatcher validates all slots before its first CPI, including deferred amount slots and uncategorized prerequisites. `invoke_cpi` also requires an explicit expected-account slice; passing `&[]` succeeds only when that entry has no required bindings. The `invoke` module's lower-level execution primitives do not apply registry policy.
+
+The initial binding migration preserves Kamino's user-position check and adds its token endpoints, including the deposit source, verified against the installed klend SDK. Deposit callers must supply both expected keys; omitting the source expectation or substituting the source account rejects the plan before any CPI executes:
+
+| Instruction     | Required roles (CPI account index)                  |
+| --------------- | --------------------------------------------------- |
+| Kamino deposit  | `user_account` (1), `source_token_account` (9)      |
+| Kamino withdraw | `user_account` (1), `destination_token_account` (9) |
+| Kamino borrow   | `user_account` (1), `destination_token_account` (8) |
+| Kamino repay    | `user_account` (1), `source_token_account` (6)      |
+
+Other existing entries retain an empty binding list; they have not acquired implicit account guarantees. Variable/raw instruction layouts need an operation-specific registration or explicit host validation before fixed account-role indices are meaningful. Ownership, mint, token authority, PDA derivation, distinct-account requirements, instruction arguments and post-CPI balance checks remain host responsibilities.
+
+### Migrating from the single target check
+
+Replace `expected_target_account_index` with `required_accounts`, and `.expected_target_account(key)` with a category or slot expectation. Unlike the old optional check, missing expectations now fail. This is a **breaking Rust/TypeScript metadata API change**; the existing `InstructionRefs` Borsh bytes and CPI IDs remain unchanged. The generated catalog is schema version 2. Run `pnpm codegen` to regenerate JSON and TypeScript rather than editing generated files.
+
+`tests/fixtures/legacyRegistry.json` remains the original immutable baseline. `namedAccountRegistry.json` additionally freezes the audited role/index migration so later codegen cannot silently remove, rename, move, or add a requirement on an existing ID. Registration order is immaterial. Allocate a new CPI ID for subsequent changes to these requirements.
+
 ## Rust registry validation and TypeScript codegen
 
-The Rust registries in `crates/<integration>/src/registry.rs` are the source of truth for CPI IDs, program addresses, instruction names, categories, and target-account indices. Retired IDs are maintained in `crates/core/src/retired.rs`. `registry/catalog.json` and `packages/*/src/generated.ts` are generated outputs; do not edit them manually.
+The Rust registries in `crates/<integration>/src/registry.rs` are the source of truth for CPI IDs, program addresses, instruction names, categories, and named account bindings. Retired IDs are maintained in `crates/core/src/retired.rs`. `registry/catalog.json` and `packages/*/src/generated.ts` are generated outputs; do not edit them manually.
 
 ```sh
 # Compile and inspect every Rust integration crate, checking IDs globally.
@@ -85,7 +152,7 @@ The workflow follows `tokenized-positions`' ignored `export_cpi_registry` Rust t
 
 `check:registry` rejects overlapping IDs within or across crates, reuse of retired IDs, duplicate labels/programs, undeclared program targets, and incompatible changes to released entries. Errors identify the ID and conflicting integration/program labels. Neither check command rewrites tracked files; temporary export files and Cargo build artifacts are the only outputs. `codegen` validates everything before writing generated files and can regenerate them even when the JSON catalog and TypeScript outputs are missing. `pnpm check` runs this validation in CI through `check:generated`.
 
-The JSON export records each on-chain program separately, with an `integration` field when related programs share a crate/package. Kamino lending and farms share `kamino`; enabling that feature in the aggregate registry includes both programs. The TypeScript constants, program addresses, discriminators, categories, and target indices all come from the Rust export.
+The JSON export records each on-chain program separately, with an `integration` field when related programs share a crate/package. Kamino lending and farms share `kamino`; enabling that feature in the aggregate registry includes both programs. The TypeScript constants, program addresses, discriminators, categories, and account bindings all come from the Rust export.
 
 ### Adding or changing CPI registrations
 
@@ -95,7 +162,7 @@ The JSON export records each on-chain program separately, with an `integration` 
 
 For a new integration, create its crate under `crates/` and TypeScript package under `packages/`, and add a dev-dependency on `solana-cpi-standard-core` with `features = ["registry-export"]`. Declare its export test as in `crates/jupiter/src/registry.rs`. Add its optional aggregate-registry dependency/feature and sandbox coverage. After changing Cargo dependencies, update `Cargo.lock` with `cargo check --workspace` before running the locked registry commands. The checker discovers new crates automatically, including ones not yet added to the aggregate registry.
 
-Removing an entry requires adding its ID to Rust's `RETIRED_IDS`. Changing a program, instruction, category, or target-account meaning requires a new ID. Preserve `tests/fixtures/legacyRegistry.json` as the compatibility baseline. When releasing new allocations, extend that baseline with the newly released entries so later releases protect them too.
+Removing an entry requires adding its ID to Rust's `RETIRED_IDS`. Changing a program, instruction, category, or required account binding requires a new ID. Preserve `tests/fixtures/legacyRegistry.json` as the compatibility baseline. When releasing new allocations, extend that baseline with the newly released entries so later releases protect them too.
 
 IDs remain globally allocated even when consumers enable only a subset of integrations. The existing wire format has 256 IDs; widening it would require a versioned wire-format change.
 
@@ -109,7 +176,7 @@ Compared with the source implementation, this extraction rejects oversized byte 
 
 ## Host responsibilities
 
-Registry membership identifies a program and instruction format; it does not authorize arbitrary user-supplied plans. The host must validate its signer/PDA, account ownership, token/ATA relationships, allowed operations, and business invariants. Category validation ignores only **registered** uncategorized operations. Target checks apply only to entries with a configured target index.
+Registry membership identifies a program and instruction format; it does not authorize arbitrary user-supplied plans. The host must validate its signer/PDA, account ownership, token/ATA relationships, allowed operations, and business invariants. Category validation ignores only **registered** uncategorized operations. Named address checks apply to the roles explicitly declared in each entry; an empty `required_accounts` list supplies no address-binding guarantees. All declared roles are mandatory, including on uncategorized operations.
 
 Jupiter and Metaplex retain their original raw-data registrations. Their category labels do not validate the opcode inside the raw bytes. Hosts accepting untrusted raw payloads must validate their instruction semantics separately.
 
@@ -138,7 +205,7 @@ pnpm check
 
 `pnpm test:integrations` builds the packages and sandbox, starts Surfpool, deploys the sandbox, runs the selected suites, and stops the validator it started. A separate validator startup is only needed when passing `--use-existing`.
 
-The [sandbox program](programs/cpi-sandbox/README.md) accepts arbitrary registered CPI bundles and signs with a PDA scoped to the test payer. The suites follow the Surfpool approach from `tokenized-positions` and run the **real forked program bytecode**, not mock integration programs.
+The [sandbox program](programs/cpi-sandbox/README.md) accepts registered CPI bundles plus explicit per-slot named expectations and signs with a PDA scoped to the test payer. Expectations are test-caller assertions, not a production authorization policy; the sandbox controls only that caller's PDA. The suites follow the Surfpool approach from `tokenized-positions` and run the **real forked program bytecode**, not mock integration programs.
 
 Prerequisites: Node.js 22+, pnpm 10.24.0, Anchor 0.31.1, Solana/Agave CLI, and Surfpool. Validated with Solana CLI 2.3.8, SBF platform-tools v1.52, and Surfpool 1.1.2. `build:sandbox` selects platform-tools v1.52; the first build may download them. The runtime dependency lock includes a CommonJS-compatible UUID override for Solana web3.js on earlier Node 22 releases.
 

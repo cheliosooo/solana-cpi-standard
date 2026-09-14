@@ -10,8 +10,8 @@ export const CpiTypes = {
 export type CpiType = typeof CpiTypes[keyof typeof CpiTypes];
 
 export const CPI_ENTRIES = [
-  { id: 20, label: "MPL_UPDATE_METADATA", programId: PROGRAM_ID, discriminator: null, category: "UpdateMintMetadata", expectedTargetAccountIndex: null },
-  { id: 21, label: "MPL_CREATE_METADATA", programId: PROGRAM_ID, discriminator: null, category: "UpdateMintMetadata", expectedTargetAccountIndex: null },
+  { id: 20, label: "MPL_UPDATE_METADATA", programId: PROGRAM_ID, discriminator: null, category: "UpdateMintMetadata", requiredAccounts: [] },
+  { id: 21, label: "MPL_CREATE_METADATA", programId: PROGRAM_ID, discriminator: null, category: "UpdateMintMetadata", requiredAccounts: [] },
 ] as const;
 
 export const { createCpiData, fromInstruction } = createIntegration(CPI_ENTRIES);

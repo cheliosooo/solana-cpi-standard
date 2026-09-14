@@ -10,7 +10,7 @@ const categories = [
 
 export function validateCatalog(catalog) {
   if (
-    catalog.version !== 1 ||
+    catalog.version !== 2 ||
     !Array.isArray(catalog.programs) ||
     !Array.isArray(catalog.retiredIds)
   ) {
@@ -77,13 +77,20 @@ export function validateCatalog(catalog) {
         )
           throw new Error(`Invalid discriminator for ${entry.label}`);
       }
-      if (
-        entry.expectedTargetAccountIndex !== null &&
-        (!Number.isInteger(entry.expectedTargetAccountIndex) ||
-          entry.expectedTargetAccountIndex < 0 ||
-          entry.expectedTargetAccountIndex > 253)
-      )
-        throw new Error("Invalid target account index");
+      if (!Array.isArray(entry.requiredAccounts))
+        throw new Error("Missing required account bindings");
+      const roles = new Set();
+      for (const binding of entry.requiredAccounts) {
+        if (
+          typeof binding.role !== "string" ||
+          !/^[a-z][a-z0-9_:]*$/.test(binding.role) ||
+          roles.has(binding.role)
+        )
+          throw new Error(`Invalid or duplicate account role for ${entry.label}`);
+        roles.add(binding.role);
+        if (!Number.isInteger(binding.index) || binding.index < 0 || binding.index > 253)
+          throw new Error(`Invalid account binding index for ${entry.label}`);
+      }
     }
   }
 }
@@ -107,7 +114,6 @@ export function validateCompatibility(catalog, legacy) {
     programId,
     instructionName: entry.instructionName,
     category: entry.category,
-    expectedTargetAccountIndex: entry.expectedTargetAccountIndex,
   });
   const current = new Map(
     catalog.programs.flatMap((p) => p.entries.map((e) => [e.id, identity(e, p.programId)])),
@@ -123,6 +129,28 @@ export function validateCompatibility(catalog, legacy) {
           throw new Error(`Removed ID ${entry.id} must be retired`);
       } else if (JSON.stringify(found) !== JSON.stringify(identity(entry, program.programId))) {
         throw new Error(`Existing CPI ID ${entry.id} changed meaning`);
+      } else {
+        const currentEntry = catalog.programs
+          .flatMap((p) => p.entries)
+          .find((e) => e.id === entry.id);
+        // Preserve the original target as UserAccount during the v1 -> v2 migration.
+        // A v2 baseline protects the full set, including newly added destinations.
+        const required =
+          legacy.version === 1
+            ? entry.expectedTargetAccountIndex == null
+              ? []
+              : [{ role: "user_account", index: entry.expectedTargetAccountIndex }]
+            : entry.requiredAccounts;
+        for (const binding of required) {
+          if (
+            !currentEntry.requiredAccounts.some(
+              (b) => b.role === binding.role && b.index === binding.index,
+            )
+          )
+            throw new Error(`Existing CPI ID ${entry.id} changed account binding ${binding.role}`);
+        }
+        if (legacy.version === 2 && currentEntry.requiredAccounts.length !== required.length)
+          throw new Error(`Existing CPI ID ${entry.id} changed account bindings`);
       }
     }
   }

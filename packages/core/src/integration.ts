@@ -10,6 +10,20 @@ export function createIntegration<const Entries extends readonly CpiEntry[]>(ent
     if (!Number.isInteger(entry.id) || entry.id < 0 || entry.id > 255 || registry.has(entry.id)) {
       throw new Error(`Invalid or duplicate CPI ID: ${entry.id}`);
     }
+    const roles = new Set<string>();
+    if (!Array.isArray(entry.requiredAccounts))
+      throw new Error("Missing required account bindings");
+    for (const binding of entry.requiredAccounts) {
+      if (
+        typeof binding.role !== "string" ||
+        !/^[a-z][a-z0-9_:]*$/.test(binding.role) ||
+        roles.has(binding.role)
+      )
+        throw new Error("Invalid or duplicate account role");
+      if (!Number.isInteger(binding.index) || binding.index < 0 || binding.index > 253)
+        throw new Error("Invalid account binding index");
+      roles.add(binding.role);
+    }
     registry.set(entry.id, entry);
   }
   function getEntry(id: Id): CpiEntry {

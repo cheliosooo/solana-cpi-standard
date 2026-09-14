@@ -16,3 +16,9 @@ Scope: `execute_cpis`, its Anchor account constraints, the extracted core dispat
 | External mint authorities  | Real mainnet program/mint definitions are forked locally. Local token balances and farm accrued rewards are explicitly seeded test state. No claim is made about production mint freeze or upgrade authority policy.                                 |
 
 Validated with the SBF sandbox running on Surfpool, including real Jupiter, Perena, Kamino lending/farms, and Metaplex program invocations. Native unit tests alone do not establish runtime behavior; the integration tests exercise the compiled sandbox.
+
+## Named-account update
+
+The sandbox accepts explicit per-slot expected role/address pairs. It resolves names only against the selected registry entry, rejects unknown roles/slots, and leaves duplicate detection and two-way role/key checks to core. All CPI bindings, including deferred-amount slots, are checked before invocation. No expectations are inferred from the CPI account mapping.
+
+The payer/PDA signer constraints and seed derivation are unchanged. Expected addresses are caller-controlled assertions in this test-only program; they confer no authority beyond that caller's PDA. Production programs must derive them from trusted state or independently validated accounts. Token ownership, mint, ATA and distinct-account rules are still outside this sandbox's guarantees. No financial arithmetic, new stored state or cross-instruction authority is introduced. The additional slot indexing is bounds-checked. Core unit tests cover missing roles, substituted keys, overlapping scopes, deferred slots, aliases and invalid indices; the sandbox suite checks these assertions independently of the account mapping.

@@ -15,7 +15,7 @@ static ENTRIES: &[CpiEntry] = &[
         program_id: Pubkey::new_from_array([1; 32]),
         instruction_name: "",
         category: Some(CpiCategory::Swap),
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: 8,
@@ -23,7 +23,7 @@ static ENTRIES: &[CpiEntry] = &[
         program_id: Pubkey::new_from_array([2; 32]),
         instruction_name: "refresh",
         category: None,
-        expected_target_account_index: None,
+        required_accounts: &[],
     },
     CpiEntry {
         id: 16,
@@ -31,7 +31,10 @@ static ENTRIES: &[CpiEntry] = &[
         program_id: Pubkey::new_from_array([2; 32]),
         instruction_name: "deposit",
         category: Some(CpiCategory::Deposit),
-        expected_target_account_index: Some(1),
+        required_accounts: &[solana_cpi_standard_core::AccountBinding {
+            role: solana_cpi_standard_core::USER_ACCOUNT,
+            index: 1,
+        }],
     },
 ];
 static REGISTRY: CpiRegistry = CpiRegistry::new(&[ENTRIES]);
